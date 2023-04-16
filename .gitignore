@@ -1,1 +1,5 @@
 /node_project/node_modules
+/node_project/postgres_data
+/postgres_data
+/dbdata
+/test-up-tool-kit/node_modules
