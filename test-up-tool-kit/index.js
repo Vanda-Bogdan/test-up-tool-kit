@@ -4,29 +4,40 @@ const { spawnSync } = require("child_process");
 const YAML = require('yaml')
 const fs = require('fs');
 
-const readline = require('readline').createInterface({
-    input: process.stdin,
-    output: process.stdout
-})
+// const readline = require('readline').createInterface({
+//     input: process.stdin,
+//     output: process.stdout
+// })
 
 
-function buildYML() {
+const readline = require("readline"); 
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout, }); 
+let name = ''
 
-    // readline.question('Укажите путь к файлу docker-compose.yml: ', name => {
-      
-    //     readline.close();
-    //     let file = fs.readFileSync(name, 'utf8')
-    //     //console.log(file)
-    //     let parsed = YAML.parse(file)
-    //     console.log(parsed)
-    // });
+const readConsole = async () => { 
+    console.log('Укажите путь к файлу docker-compose.yml: ');
+    const it = rl[Symbol.asyncIterator]();
+    const line1 = await it.next() ;
+    console.log(line1); 
+}; 
 
-    const prompt = require('prompt-sync')();
 
-    const name = prompt('What is your name?');
-    console.log(`Hey there ${name}`);
+
+async function buildYML() {
+
+    await readConsole();
+    let file = fs.readFileSync('D:/Study/Diplom/node_project/docker-compose2.yml', 'utf-8') //D:/Study/Diplom/node_project/docker-compose.yml
+    //console.log(file)
+    //let parsed = YAML.parse(file)
+    let doc = YAML.parseDocument(file)
+    //console.log(doc.get('services').toString())
+    doc.addIn(['services'], 'testing');
+    console.log(doc.get('services').toString())
+    fs.writeFileSync('D:/Study/Diplom/node_project/docker-compose2.yml', doc.toString());
 
 }
+
+
 
 
 function checkInitialDependencies(){
@@ -74,5 +85,6 @@ function checkGitSet(){
 
 
 //checkInitialDependencies();
-buildYML() 
-process.exit();
+buildYML(); 
+
+//process.exit();
