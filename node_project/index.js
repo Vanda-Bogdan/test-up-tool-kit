@@ -19,9 +19,9 @@ app.use(errorHandler)
 const start = async () => {
     try {
 
-        await sequelize.authenticate()
-        await sequelize.sync()
-        console.log('DB connected')
+        //await sequelize.authenticate()
+        //await sequelize.sync()
+        //console.log('DB connected')
         app.listen(PORT, () => {
             console.log(`Server started: http://localhost:${PORT}`)
         });
@@ -37,6 +37,10 @@ start();
 
 app.get("/", (request, response) => {
     response.sendFile(__dirname + "/views/index.html");
+});
+
+app.get("/test", (request, response) => {
+    response.send('privet');
 });
 
 /*app.get("/user/:user_id", (request, response) => {
