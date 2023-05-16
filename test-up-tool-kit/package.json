@@ -1,11 +1,13 @@
 {
   "name": "test-up-tool-kit",
-  "version": "1.0.1",
+  "version": "1.1.4",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "prepare": "node scripts/postinstall.js",
+    "testup": "node node_modules/test-up-tool-kit/scripts/index.js"
   },
   "author": "Vanda Bogdan",
   "license": "ISC",
