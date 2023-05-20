@@ -12,6 +12,10 @@ class ProductTypeController{
         
     }
 
+    async getAll(req, res){
+        
+    }
+
 
 }
 

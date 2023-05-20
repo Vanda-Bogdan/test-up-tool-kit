@@ -9,6 +9,7 @@ async function start(){
     await executeCommandWithResult(`docker ps -aqf "name=${nodeContainerName}"`).then((response) => {
         nodeContainerID = response.replace(/\s/g, "")
         executeCommand(`docker exec ${nodeContainerID} npm run test`);
+        console.log('running tests...')
     });
     await executeCommand(`docker cp ${nodeContainerID}:/usr/src/app/test-report.html ./${folderName}/test-report.html`);
 }

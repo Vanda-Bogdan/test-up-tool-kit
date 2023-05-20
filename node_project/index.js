@@ -1,6 +1,6 @@
 const PORT = 3000
-const HOST = '127.0.0.1'
-
+//const HOST = '127.0.0.1'
+require('dotenv').config();
 const express = require("express")
 const sequelize = require("./db")
 const models = require("./models")
@@ -12,18 +12,16 @@ const app = express()
 app.use(express.json())
 app.use('/api', router)
 
-
-
 app.use(errorHandler)
 
 const start = async () => {
     try {
 
-        //await sequelize.authenticate()
-        //await sequelize.sync()
-        //console.log('DB connected')
+        await sequelize.authenticate()
+        await sequelize.sync()
+        console.log('DB connected')
         app.listen(PORT, () => {
-            console.log(`Server started: http://localhost:${PORT}`)
+            console.log(`Server started: http://${process.env.DB_HOST}:${PORT}`)
         });
 
     }
@@ -33,7 +31,6 @@ const start = async () => {
 }
 
 start();
-
 
 app.get("/", (request, response) => {
     response.sendFile(__dirname + "/views/index.html");
@@ -46,4 +43,6 @@ app.get("/test", (request, response) => {
 /*app.get("/user/:user_id", (request, response) => {
     response.send(`UserID: ${request.params.user_id}`);
 });*/
+
+module.exports = app
 

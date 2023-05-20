@@ -2,6 +2,8 @@ const { execSync } = require('child_process');
 const YAML = require('yaml')
 const fs = require('fs');
 const { executeCommand, executeCommandWithResult} = require('./functions')
+const { parse, stringify } = require('envfile')
+require('dotenv').config()
 
 const readline = require("readline"); 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout, }); 
@@ -9,9 +11,10 @@ let name = ''
 let token = ''
 let folderName = "testup";
 let networkName = '';
+let oldEnvValue = '';
 
-const readConsole = async () => { 
-    console.log('Specify the path of docker-compose.yml: ');
+const readConsole = async (text) => { 
+    console.log(text);
     const it = rl[Symbol.asyncIterator]();
     const line1 = await it.next() ;
     return line1.value;
@@ -20,7 +23,7 @@ const readConsole = async () => {
 async function composeUp() {
 
     createFolder(folderName);
-    let pathToDocComp = await readConsole();
+    let pathToDocComp = await readConsole('Specify the path of docker-compose.yml: ');
     let file = fs.readFileSync(pathToDocComp, 'utf-8') 
     
     let doc = YAML.parseDocument(file)
@@ -71,6 +74,50 @@ async function packNode(){
 
     console.log('Done!')
 }
+
+async function updateENV(){
+    try {
+        if (fs.existsSync(".env")) {
+            let containerName = process.env.DB_CONTAINER_NAME + '_' + token;
+            await executeCommandWithResult(`docker ps -aqf "name=${containerName}"`).then((containerID) => {
+                containerID = containerID.replace(/\s/g, "")
+                executeCommandWithResult(`docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${containerID}`).then((response) => {
+                    response = response.replace(/\s/g, "");
+                    let data = fs.readFileSync(".env", "utf8");
+                    let ENV = parse(data);
+                    oldEnvValue = ENV.DB_HOST;
+                    ENV.DB_HOST = response;
+                    fs.writeFileSync('.env', stringify(ENV));
+                });
+            });
+        }
+        else{
+            console.log('Error: .env file is required!')
+            process.exit();
+        }
+      } catch (err) {
+        console.error(err);
+        process.exit();
+      }
+}
+
+async function rollbackENV(){
+    try {
+        if (fs.existsSync(".env")) {
+            let data = fs.readFileSync(".env", "utf8");
+            let ENV = parse(data);
+            ENV.DB_HOST = oldEnvValue;
+            fs.writeFileSync('.env', stringify(ENV));
+        }
+        else{
+            console.log('Error: .env file is required!')
+            process.exit();
+        }
+      } catch (err) {
+        console.error(err);
+        process.exit();
+      }
+}
  
 async function createFolder(name){
     try {
@@ -91,40 +138,60 @@ async function checkInitialDependencies(){
 async function checkDockerRunning() {
     try {
         execSync('docker ps', {stdio : 'pipe' });
-        console.log('Докер функционирует');
+        console.log('Check Docker is running');
         return true;
     } 
     catch (e) {
-        console.log('Докер НЕ функционирует');
-        return false;
+        console.log('Docker is NOT running');
+        process.exit();
     }
 }
 
 async function setJestConfig(){
-
+    try {
+        if (fs.existsSync("jest.config.json")) {
+            let data = fs.readFileSync("jest.config.json", "utf8");
+            let obj = JSON.parse(data);
+            if(JSON.stringify(obj["reporters"])=='["default",["./node_modules/jest-html-reporter",{"pageTitle":"Test Report"}]]'){
+                return;
+            }
+            if(!Array.isArray(obj["reporters"])){
+                obj["reporters"] = [obj["reporters"]];
+            }
+            obj["reporters"].push( ["default", ["./node_modules/jest-html-reporter", {"pageTitle": "Test Report"}]] );
+            fs.writeFileSync('jest.config.json', JSON.stringify(obj));
+        }
+        else{
+            fs.writeFileSync('jest.config.json', '{"reporters": ["default",["./node_modules/jest-html-reporter", {"pageTitle": "Test Report"}]]}');
+        }
+      } catch (err) {
+        console.error(err);
+      }
 }
+
+
 
 function checkGitExists() {
     try {
         execSync('git --version', {stdio : 'pipe' });
-        console.log('Git установлен');
+        console.log('Check Git is installed');
         return true;
     } 
     catch (e) {
-        console.log('Git НЕ установлен');
-        return false;
+        console.log('Git is NOT installed');
+        process.exit();
     }
 }
 
 function checkGitSet(){
     try {
         execSync('git status', {stdio : 'pipe' });
-        console.log('Git репозиторий найден');
+        console.log('Check Git repository exists');
         return true;
     } 
     catch (e) {
-        console.log('Git репозиторий НЕ найден');
-        return false;
+        console.log('Git repository NOT found');
+        process.exit();
     }
 }
 
@@ -132,7 +199,10 @@ async function start(){
     //await checkInitialDependencies();
     token = Math.random().toString().substring(2,6)
     await composeUp();
+    await updateENV();
+    await setJestConfig();
     await packNode();
+    await rollbackENV();
     await finalActions();
     process.exit();
 }
