@@ -7,11 +7,8 @@ require('dotenv').config()
 
 const readline = require("readline"); 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout, }); 
-let name = ''
-let token = ''
+let name, token, networkName;
 let folderName = "testup";
-let networkName = '';
-let oldEnvValue = '';
 
 const readConsole = async (text) => { 
     console.log(text);
@@ -48,75 +45,6 @@ async function composeUp() {
 
     console.log('building compose...');
     await executeCommand(`docker compose -f ./${folderName}/docker-compose.yml -p=${name} up -d`);
-}
-
-async function packNode(){
-    console.log('packing node project to container...');
-    fs.writeFileSync('./' + folderName + '/.dockerignore', "node_modules\nnpm-debug.log");
-
-    let dockerfile_inner = 'FROM node:18.0.0\nWORKDIR /usr/src/app\n' + 
-    'COPY package*.json ./\nRUN npm install\nCOPY . .\nENTRYPOINT ["tail", "-f", "/dev/null"]';
-    fs.writeFileSync('./' + folderName + '/Dockerfile', dockerfile_inner);
-
-    await executeCommand('cd ..');
-
-    console.log('1/3 building image...');
-    await executeCommand(`docker build . -t node_project_image${token} -f ${folderName}/Dockerfile`);
-
-    console.log('2/3 running image...');
-    await executeCommand(`docker run -d --name node_project${token} node_project_image${token}`);
-
-    console.log('3/3 connecting container to network...')
-    await executeCommandWithResult(`docker ps -aqf "name=node_project${token}"`).then((response) => {
-        response = response.replace(/\s/g, "")
-        executeCommand(`docker network connect ${networkName} ${response}`);
-    });
-
-    console.log('Done!')
-}
-
-async function updateENV(){
-    try {
-        if (fs.existsSync(".env")) {
-            let containerName = process.env.DB_CONTAINER_NAME + '_' + token;
-            await executeCommandWithResult(`docker ps -aqf "name=${containerName}"`).then((containerID) => {
-                containerID = containerID.replace(/\s/g, "")
-                executeCommandWithResult(`docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${containerID}`).then((response) => {
-                    response = response.replace(/\s/g, "");
-                    let data = fs.readFileSync(".env", "utf8");
-                    let ENV = parse(data);
-                    oldEnvValue = ENV.DB_HOST;
-                    ENV.DB_HOST = response;
-                    fs.writeFileSync('.env', stringify(ENV));
-                });
-            });
-        }
-        else{
-            console.log('Error: .env file is required!')
-            process.exit();
-        }
-      } catch (err) {
-        console.error(err);
-        process.exit();
-      }
-}
-
-async function rollbackENV(){
-    try {
-        if (fs.existsSync(".env")) {
-            let data = fs.readFileSync(".env", "utf8");
-            let ENV = parse(data);
-            ENV.DB_HOST = oldEnvValue;
-            fs.writeFileSync('.env', stringify(ENV));
-        }
-        else{
-            console.log('Error: .env file is required!')
-            process.exit();
-        }
-      } catch (err) {
-        console.error(err);
-        process.exit();
-      }
 }
  
 async function createFolder(name){
@@ -170,7 +98,6 @@ async function setJestConfig(){
 }
 
 
-
 function checkGitExists() {
     try {
         execSync('git --version', {stdio : 'pipe' });
@@ -197,19 +124,25 @@ function checkGitSet(){
 
 async function start(){
     //await checkInitialDependencies();
-    token = Math.random().toString().substring(2,6)
+    await createToken();
     await composeUp();
-    await updateENV();
     await setJestConfig();
-    await packNode();
-    await rollbackENV();
-    await finalActions();
+    await updateConfig();
+    console.log('Compose Up - Done!');
     process.exit();
 }
 
-async function finalActions(){
-    var info = {nodeContainerName:`node_project${token}`, token: token, folderName: folderName}
-    fs.writeFileSync('./node_modules/test-up-tool-kit/config.json', JSON.stringify(info));
+async function createToken(){
+    token = Math.random().toString().substring(2,6)
+}
+
+async function updateConfig(){
+    let config = JSON.parse(fs.readFileSync('./node_modules/test-up-tool-kit/config.json'))
+    config["nodeContainerName"] = `node_project${token}`;
+    config["token"] = token;
+    config["folderName"] = folderName;
+    config["networkName"] = networkName;
+    fs.writeFileSync('./node_modules/test-up-tool-kit/config.json', JSON.stringify(config));
 }
 
 start();
