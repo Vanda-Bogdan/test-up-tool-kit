@@ -1,4 +1,5 @@
 const { execSync } = require('child_process');
+const fs = require('fs');
 
 async function executeCommand(command){
     try {
@@ -21,7 +22,30 @@ async function executeCommandWithResult(command){
     }
 }
 
+async function checkDockerRunning() {
+    try {
+        execSync('docker ps', {stdio : 'pipe' });
+        return true;
+    } 
+    catch (e) {
+        console.log('ERROR: Docker is NOT running!');
+        process.exit();
+    }
+}
+
+async function createFolder(name){
+    try {
+        if (!fs.existsSync(name)) {
+          fs.mkdirSync(name);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+}
+
 module.exports = {
     executeCommand,
-    executeCommandWithResult
+    executeCommandWithResult,
+    checkDockerRunning,
+    createFolder
 };

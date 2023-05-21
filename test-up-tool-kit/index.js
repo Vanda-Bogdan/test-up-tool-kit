@@ -1,7 +1,7 @@
 const { execSync } = require('child_process');
 const YAML = require('yaml')
 const fs = require('fs');
-const { executeCommand, executeCommandWithResult} = require('./functions')
+const { createFolder, checkDockerRunning, executeCommand, executeCommandWithResult} = require('./functions')
 const { parse, stringify } = require('envfile')
 require('dotenv').config()
 
@@ -19,6 +19,7 @@ const readConsole = async (text) => {
 
 async function composeUp() {
 
+    checkDockerRunning();
     createFolder(folderName);
     let pathToDocComp = await readConsole('Specify the path of docker-compose.yml: ');
     let file = fs.readFileSync(pathToDocComp, 'utf-8') 
@@ -47,34 +48,6 @@ async function composeUp() {
     await executeCommand(`docker compose -f ./${folderName}/docker-compose.yml -p=${name} up -d`);
 }
  
-async function createFolder(name){
-    try {
-        if (!fs.existsSync(name)) {
-          fs.mkdirSync(name);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-}
-
-async function checkInitialDependencies(){
-    await checkDockerRunning();
-    //checkGitExists();
-    //checkGitSet();
-}
-
-async function checkDockerRunning() {
-    try {
-        execSync('docker ps', {stdio : 'pipe' });
-        console.log('Check Docker is running');
-        return true;
-    } 
-    catch (e) {
-        console.log('Docker is NOT running');
-        process.exit();
-    }
-}
-
 async function setJestConfig(){
     try {
         if (fs.existsSync("jest.config.json")) {
@@ -123,7 +96,6 @@ function checkGitSet(){
 }
 
 async function start(){
-    //await checkInitialDependencies();
     await createToken();
     await composeUp();
     await setJestConfig();
