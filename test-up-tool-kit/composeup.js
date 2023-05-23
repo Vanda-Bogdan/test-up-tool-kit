@@ -109,11 +109,18 @@ async function createToken(){
 }
 
 async function updateConfig(){
-    let config = JSON.parse(fs.readFileSync('./node_modules/test-up-tool-kit/config.json'))
-    config["nodeContainerName"] = `node_project${token}`;
+    
+    let config = {};
+    if (fs.existsSync('./node_modules/test-up-tool-kit/config.json')) {
+        config = JSON.parse(fs.readFileSync('./node_modules/test-up-tool-kit/config.json'))
+    }
+    config["nodeContainerName"] = `node_project${token}`;        
     config["token"] = token;
     config["folderName"] = folderName;
     config["networkName"] = networkName;
+    console.log(config)
+    console.log(JSON.stringify(config))
+    
     fs.writeFileSync('./node_modules/test-up-tool-kit/config.json', JSON.stringify(config));
 }
 
