@@ -1,8 +1,9 @@
 const controller = require('../controllers/productTypeController')
 const {ProductType} = require("../models")
 const sequelize = require("../db")
-const app = require('../index')
+//const app = require('../index')
 const request = require('supertest')
+
 
 const req = request("http://localhost:3000");
 
@@ -20,28 +21,6 @@ describe("group1", () => {
     //     expect(1).toBe(1);
     // });
     
-    // test('test2', () => {
-    
-    //     /*const Req = { body: { name: 'Test_type' } };
-    //     const Res = {};
-    
-    //     await controller.create(Req, Res)*/
-    //     expect(1).toBe(2);
-    // });
-
-    // it('create_type', async () => {
-    //     const res = await request(app)
-    //         .post('/productType/create')
-    //         .send({
-    //             name: 'TestType'
-    //         })
-    //     //expect(res.statusCode).toEqual(201)
-    //     //expect(res.body).toHaveProperty('type')
-    //     //expect(sequelize.ProductType.count).toEqual(1)
-    //     const { count, rows } = await ProductType.findAndCountAll();
-    //     expect(count).toEqual(1)
-    // })
-
     it('create_type', async () => {
         let name = "testName"
 
@@ -62,5 +41,7 @@ describe("group1", () => {
 
     
 })
+
+
 
 

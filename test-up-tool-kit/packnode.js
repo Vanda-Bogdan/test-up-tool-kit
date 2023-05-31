@@ -18,6 +18,7 @@ async function createToken(){
 }
 
 async function updateENV(){
+    checkDockerRunning();
     try {
         if (fs.existsSync(".env")) {
             let containerName = process.env.DB_CONTAINER_NAME + '_' + oldToken;

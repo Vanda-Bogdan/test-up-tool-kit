@@ -11,7 +11,6 @@ let name, token, networkName;
 let folderName = "testup";
 
 const readConsole = async (text) => { 
-    console.log(text);
     const it = rl[Symbol.asyncIterator]();
     const line1 = await it.next() ;
     return line1.value;
@@ -22,7 +21,14 @@ async function composeUp() {
     checkDockerRunning();
     createFolder(folderName);
     let pathToDocComp = await readConsole('Specify the path of docker-compose.yml: ');
-    let file = fs.readFileSync(pathToDocComp, 'utf-8') 
+    let file; 
+    try{
+        file = fs.readFileSync(pathToDocComp, 'utf-8')
+    }catch(e){
+        console.log('ERROR: invalid file path!');
+        console.log(e);
+        process.exit();
+    }
     
     let doc = YAML.parseDocument(file)
     
