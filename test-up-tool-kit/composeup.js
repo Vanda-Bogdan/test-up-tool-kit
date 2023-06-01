@@ -11,6 +11,7 @@ let name, token, networkName;
 let folderName = "testup";
 
 const readConsole = async (text) => { 
+    console.log(text)
     const it = rl[Symbol.asyncIterator]();
     const line1 = await it.next() ;
     return line1.value;
@@ -124,8 +125,6 @@ async function updateConfig(){
     config["token"] = token;
     config["folderName"] = folderName;
     config["networkName"] = networkName;
-    console.log(config)
-    console.log(JSON.stringify(config))
     
     fs.writeFileSync('./node_modules/test-up-tool-kit/config.json', JSON.stringify(config));
 }
