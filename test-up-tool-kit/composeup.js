@@ -43,6 +43,9 @@ async function composeUp() {
             if(element.key.value==='ports'){
                 element.value.items = '';
             }
+            if(element.key.value==='networks'){
+                element.value.items = '';
+            }
         });
     });
     
